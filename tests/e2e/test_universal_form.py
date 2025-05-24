@@ -79,7 +79,13 @@ def test_submit_with_only_required_checkboxes(page, config_path):
 
 @pytest.mark.parametrize("config_path", form_config_files)
 def test_submit_all_required_but_no_file(page, config_path):
-    form_config = load_config_with_placeholders(config_path)    
+    form_config = load_config_with_placeholders(config_path)   
+    has_file_field = any(
+        field.get("type") == "file" and field.get("required", False)
+        for field in form_config.get("form_fields", [])
+    )
+    if not has_file_field:
+        pytest.skip("Skipping test: no file upload field in configuration.") 
     form = FormPage(page, form_config)
     form.goto()
 
@@ -142,6 +148,12 @@ def test_submit_all_required_but_no_file(page, config_path):
 @pytest.mark.parametrize("config_path", form_config_files)
 def test_submit_all_required_but_wrong_file_type(page, config_path):
     form_config = load_config_with_placeholders(config_path) 
+    has_file_field = any(
+        field.get("type") == "file" and field.get("required", False)
+        for field in form_config.get("form_fields", [])
+    )
+    if not has_file_field:
+        pytest.skip("Skipping test: no file upload field in configuration.") 
     form = FormPage(page, form_config)
     form.goto()
 
@@ -202,6 +214,9 @@ def test_submit_all_required_but_wrong_file_type(page, config_path):
 @pytest.mark.parametrize("config_path", form_config_files)
 def test_submit_all_required_only_and_check_mail(page, config_path):
     form_config = load_config_with_placeholders(config_path)
+    if "email_check" not in form_config:
+        pytest.skip("Email check configuration not found in form config")
+
     form = FormPage(page, form_config)
     form.goto()
 
@@ -243,19 +258,21 @@ def test_submit_all_required_only_and_check_mail(page, config_path):
     time.sleep(5)
 
     # === Autoresponder email ===
-    auto_cfg = form_config["email_check"]["autoresponder"]
-    auto_checker = EmailChecker(**auto_cfg["imap"])
-    assert auto_checker.wait_for_email(
-        subject_contains=auto_cfg["subject_contains"],
-        timeout_seconds=auto_cfg.get("timeout_seconds", 60)
-    ), "Autoresponder email not received"
-    auto_checker.check_email_content(auto_cfg, form_config["form_fields"])
+    if  "autoresponder" in form_config["email_check"]:
+        auto_cfg = form_config["email_check"]["autoresponder"]
+        auto_checker = EmailChecker(**auto_cfg["imap"])
+        assert auto_checker.wait_for_email(
+            subject_contains=auto_cfg["subject_contains"],
+            timeout_seconds=auto_cfg.get("timeout_seconds", 60)
+        ), "Autoresponder email not received"
+        auto_checker.check_email_content(auto_cfg, form_config["form_fields"])
 
     # === copy form email ===
-    hr_cfg = form_config["email_check"]["form_copy"]
-    hr_checker = EmailChecker(**hr_cfg["imap"])
-    assert hr_checker.wait_for_email(
-        subject_contains=hr_cfg["subject_contains"],
-        timeout_seconds=hr_cfg.get("timeout_seconds", 60)
-    ), "HR email not received"
-    hr_checker.check_email_content(hr_cfg, form_config["form_fields"])
+    if "form_copy" in form_config["email_check"]:
+        copy_cfg = form_config["email_check"]["form_copy"]
+        copy_checker = EmailChecker(**copy_cfg["imap"])
+        assert copy_checker.wait_for_email(
+            subject_contains=copy_cfg["subject_contains"],
+            timeout_seconds=copy_cfg.get("timeout_seconds", 60)
+        ), "HR email not received"
+        copy_checker.check_email_content(copy_cfg, form_config["form_fields"])
