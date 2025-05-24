@@ -1,3 +1,6 @@
 pytest
 pytest-playwright
 playwright
+PyYAML
+Faker
+python-dateutil

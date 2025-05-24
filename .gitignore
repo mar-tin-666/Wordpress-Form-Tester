@@ -1,5 +1,7 @@
 # Project-specific
-config/form_config.yaml
+config/*/**
+!config/*/**/*_example.yaml
+screenshots/
 
 # Visual Studio Code
 .vscode/

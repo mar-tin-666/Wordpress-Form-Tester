@@ -1,21 +1,22 @@
 url: https://example.com/contact
+locale: en_US
 success_selector: "div.wpforms-confirmation-container"
 
 form_fields:
   - name: name
     type: text
     required: true
-    value: Alicja Kowalska
-
+    value: "{{first_name}}"
+    
   - name: email
     type: text
     required: true
-    value: alicja@example.com
+    value: joe@example.com
 
   - name: message
     type: textarea
     required: true
-    value: Hello! I'm interested in your services. Please contact me back.
+    value: "Hello! {{sentence[4]}}"
 
   - name: file-upload
     type: file
@@ -47,7 +48,7 @@ email_check:
     imap:
       server: imap.mailserver.com
       port: 993
-      username: contact-replies@example.com
+      username: joe@example.com
       password: supersecret
       use_ssl: true
 

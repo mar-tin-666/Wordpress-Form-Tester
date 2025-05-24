@@ -1,22 +1,20 @@
 import pytest
-from utils.config_loader import load_config
+from utils.config_loader import load_config_with_placeholders
 from pages.form_page import FormPage
 from utils.email_checker import EmailChecker
 import os
 import time
-
-
-from utils.config_loader import load_config
+import glob
 from pages.form_page import FormPage
 
-@pytest.fixture(scope="session")
-def form_config():
-    """
-    Loads the form config YAML once per test session.
-    """
-    return load_config("config/form_config.yaml")
+form_config_files = [
+    path for path in glob.glob("config/form/*.yaml")
+    if not os.path.basename(path).endswith("_example.yaml")
+]
 
-def test_submit_button_requires_consent(page, form_config):
+@pytest.mark.parametrize("config_path", form_config_files)
+def test_submit_button_requires_consent(page, config_path):
+    form_config= load_config_with_placeholders(config_path)
     form = FormPage(page, form_config)
     form.goto()
 
@@ -35,8 +33,9 @@ def test_submit_button_requires_consent(page, form_config):
     # Teraz przycisk powinien być aktywny
     assert submit_btn.is_enabled(), "Submit button should be enabled after consent is checked"
 
-
-def test_submit_with_only_required_checkboxes(page, form_config):
+@pytest.mark.parametrize("config_path", form_config_files)
+def test_submit_with_only_required_checkboxes(page, config_path):
+    form_config= load_config_with_placeholders(config_path)
     form = FormPage(page, form_config)
     form.goto()
 
@@ -78,8 +77,9 @@ def test_submit_with_only_required_checkboxes(page, form_config):
 
     assert shown_errors > 0, "No validation errors shown for required empty fields"
 
-
-def test_submit_all_required_but_no_file(page, form_config):    
+@pytest.mark.parametrize("config_path", form_config_files)
+def test_submit_all_required_but_no_file(page, config_path):
+    form_config = load_config_with_placeholders(config_path)    
     form = FormPage(page, form_config)
     form.goto()
 
@@ -139,8 +139,9 @@ def test_submit_all_required_but_no_file(page, form_config):
 
     assert shown_errors > 0, "No validation errors shown for required empty fields"
 
-
-def test_submit_all_required_but_wrong_file_type(page, form_config):    
+@pytest.mark.parametrize("config_path", form_config_files)
+def test_submit_all_required_but_wrong_file_type(page, config_path):
+    form_config = load_config_with_placeholders(config_path) 
     form = FormPage(page, form_config)
     form.goto()
 
@@ -198,8 +199,9 @@ def test_submit_all_required_but_wrong_file_type(page, form_config):
 
     assert shown_errors > 0, "No validation errors shown for required files fields"
 
-
-def test_submit_all_required_only_and_check_mail(page, form_config):
+@pytest.mark.parametrize("config_path", form_config_files)
+def test_submit_all_required_only_and_check_mail(page, config_path):
+    form_config = load_config_with_placeholders(config_path)
     form = FormPage(page, form_config)
     form.goto()
 
